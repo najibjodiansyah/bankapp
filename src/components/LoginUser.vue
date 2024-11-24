@@ -4,18 +4,41 @@ import InputGroupAddon from 'primevue/inputgroupaddon'
 import InputText from 'primevue/inputtext'
 import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
+import { useToast } from 'primevue/usetoast'
 import axios from 'axios'
 import { computed, ref } from 'vue'
+import type { User } from '@/types/user'
+import store from '@/store'
+
+interface LoginResponse {
+  user: User
+  access_token: string
+  refresh_token: string
+}
 
 const username = ref<string>('')
 const password = ref<string>('')
 const isLoginDisabled = computed(() => !username.value || !password.value)
 
+const errorMessage = ref<string>('')
+
+const toast = useToast()
+
 const handleLogin = async () => {
-  const response = await axios.post('http://localhost:8080/v1/login-user', {
-    username: username.value,
-    password: password.value,
-  })
+  try {
+    const response = await axios.post<LoginResponse>('http://localhost:8080/v1/login-user', {
+      username: username.value,
+      password: password.value,
+    })
+    alert(response)
+
+    store.setUser(response.data.user, response.data.access_token, response.data.refresh_token)
+  } catch (error: any) {
+    if (error.response) {
+      errorMessage.value = `An error ocured ${error.response.data.message}`
+      toast.add({ severity: 'error', summary: 'hello', detail: 'message value', life: 3000 })
+    }
+  }
 }
 </script>
 
